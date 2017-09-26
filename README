@@ -1,4 +1,5 @@
 README
+System-3 N-Label Editor (S3)
 
 
 Created:        2017-09-17
@@ -6,4 +7,62 @@ Author:         Eddie Ma
 E-mail:         ema@uoguelph.ca
 
 
-Initial commit --
+This is the trained network for performing automated N-Label replacements in
+Applied Biosystems (AB1) tracefiles from Sanger Sequencing.
+
+Basecalls emitted using the KB algorithm have an associated quality value --
+those basecalls marked with a QV < 20 indicate a p(error) > 1%.
+
+This software reads ab1 files, and replaces a subset of the N-labels with
+discrete basecalls only if its own internal estimation of error is below 0.8%;
+
+In my validation, this results in an observed error rate below 1%;
+On average, validation data contained 14 N-labels per tracefile,
+of which seven N-labels are recovered.
+The other seven generally produce rates of error higher than 1%,
+and are usually ignored by S3.
+
+The training and validation of this system is described in:
+http://ieeexplore.ieee.org/document/7542173
+
+This software was developed, tested, and evaluated for downstream bioinformatics
+impact and DNA Barcoding applications in my PhD thesis.
+
+
+=== BUILDING ==
+
+-- Requires: Python 2.7 with Cython 0.27
+-- Do "make" to build the c-based Cython modules.
+
+
+== RUNNING ==
+
+$ python S3CommandLine.py someAbiFile.ab1
+
+
+== OUTPUT ==
+
+A json file is printed to stdout, with the following structure:
+
+{
+    'meta':{
+        'build'     :   "2015-09-17",
+        'version'   :   "3.50",
+        'comment'   :   "boldsystems.org",
+        'authors'   :   "Eddie YT Ma, Sujeevan Ratnasingham, Stefan C Kremer",
+        'qv_convert':   20,     # basecalls below QV 20 are treated as N-labels
+        'threshold' :   0.008,  # only accept edits when error is at most 0.8%
+    },
+    'edits':{
+        'ibase'     :[], # base index corresponding to an N-Label editing event
+        'ploc'      :[], # editing event AB1 tracefile peak location
+        'recall'    :'', # a possible base label replacement
+        'votes'     :'', # ensemble system votes
+        'lzhao'     :[], # mean conditional variance value
+        'perror'    :[], # predicted error computed from mean variance
+        'accept'    :'', # accept replacement? [Y]es|[N]o
+    },
+    'KB'            :"", # the original KB basecaller sequence
+    'ge20'          :"", # KB basecaller sequence, bases with QV < 20 as N
+    'sys3'          :"", # resulting System-3 N-label Editor sequence
+}
